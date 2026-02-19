@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Database
+*.sqlite
+database.sqlite
+
+# Uploads (should be stored externally in production)
+uploads/*
+!uploads/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment (keep .env for demo, but normally exclude)
+# .env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
