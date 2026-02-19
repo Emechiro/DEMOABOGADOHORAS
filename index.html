@@ -1,0 +1,2175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LexFirm - Legal Management Dashboard</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/prop-types@15/prop-types.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: #07090f; color: #e8e2d6; }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #0f1320; }
+    ::-webkit-scrollbar-thumb { background: #c9a84c44; border-radius: 4px; }
+
+    .app { display: flex; height: 100vh; overflow: hidden; }
+
+    .sidebar {
+      width: 260px; min-width: 260px;
+      background: linear-gradient(160deg, #0c1019 0%, #0a0d16 100%);
+      border-right: 1px solid #c9a84c22;
+      display: flex; flex-direction: column;
+      transition: width .3s ease, min-width .3s ease;
+      position: relative; z-index: 100;
+      overflow: hidden;
+    }
+    .sidebar.collapsed { width: 70px; min-width: 70px; }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid #c9a84c18;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .logo-icon {
+      width: 38px; height: 38px; min-width: 38px;
+      background: linear-gradient(135deg, #c9a84c, #e8c96e);
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; color: #07090f;
+    }
+    .logo-text { overflow: hidden; white-space: nowrap; }
+    .logo-text h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px; font-weight: 700; color: #f5f0e8;
+      letter-spacing: .5px; line-height: 1;
+    }
+    .logo-text p { font-size: 10px; color: #c9a84c; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+    .nav-section { padding: 16px 12px 8px; overflow: hidden; white-space: nowrap; }
+    .nav-label { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: #c9a84c66; padding: 0 8px; margin-bottom: 6px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 10px; border-radius: 8px; cursor: pointer;
+      font-size: 13.5px; font-weight: 400; color: #9090a8;
+      transition: all .2s; margin-bottom: 2px; white-space: nowrap;
+    }
+    .nav-item:hover { background: #c9a84c10; color: #e8e2d6; }
+    .nav-item.active {
+      background: linear-gradient(90deg, #c9a84c18, #c9a84c08);
+      color: #c9a84c; font-weight: 500;
+      border-left: 2px solid #c9a84c;
+    }
+    .nav-item svg { min-width: 18px; width: 18px; height: 18px; }
+    .nav-badge {
+      margin-left: auto; background: #c9a84c;
+      color: #07090f; font-size: 10px; font-weight: 700;
+      padding: 1px 6px; border-radius: 10px;
+    }
+    .sidebar-footer {
+      margin-top: auto;
+      border-top: 1px solid #c9a84c18;
+      padding: 16px 12px;
+    }
+    .user-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px; border-radius: 8px; cursor: pointer;
+      transition: background .2s;
+    }
+    .user-card:hover { background: #c9a84c10; }
+    .user-avatar {
+      width: 34px; height: 34px; min-width: 34px;
+      border-radius: 50%; object-fit: cover;
+      border: 2px solid #c9a84c44;
+    }
+    .user-info { overflow: hidden; }
+    .user-info p { font-size: 13px; font-weight: 500; color: #e8e2d6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-info span { font-size: 11px; color: #9090a8; }
+
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .topbar {
+      height: 60px; min-height: 60px;
+      background: #07090f;
+      border-bottom: 1px solid #c9a84c18;
+      display: flex; align-items: center;
+      padding: 0 24px; gap: 16px;
+    }
+    .topbar-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 600; color: #f5f0e8;
+      white-space: nowrap;
+    }
+    .search-bar {
+      flex: 1; max-width: 380px; margin-left: auto;
+      display: flex; align-items: center; gap: 8px;
+      background: #0f1320; border: 1px solid #c9a84c22;
+      border-radius: 8px; padding: 8px 14px;
+    }
+    .search-bar input {
+      background: none; border: none; outline: none;
+      color: #e8e2d6; font-size: 13px; width: 100%;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .search-bar input::placeholder { color: #555568; }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: #0f1320; border: 1px solid #c9a84c22;
+      color: #9090a8; cursor: pointer; transition: all .2s;
+      position: relative;
+    }
+    .icon-btn:hover { border-color: #c9a84c66; color: #c9a84c; }
+    .notif-dot {
+      position: absolute; top: 6px; right: 6px;
+      width: 7px; height: 7px; background: #c9a84c;
+      border-radius: 50%; border: 1.5px solid #07090f;
+    }
+
+    .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+    .card {
+      background: linear-gradient(135deg, #0d1018, #0a0c16);
+      border: 1px solid #c9a84c18;
+      border-radius: 12px; padding: 20px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .card:hover { border-color: #c9a84c33; box-shadow: 0 0 24px #c9a84c08; }
+
+    .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 20px; }
+
+    .stat-card { position: relative; overflow: hidden; }
+    .stat-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 34px; font-weight: 700; color: #f5f0e8;
+      line-height: 1;
+    }
+    .stat-label { font-size: 12px; margin-top: 4px; color: #70708a; }
+    .stat-change {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 12px; margin-top: 8px; font-weight: 500;
+    }
+    .stat-change.up { color: #4caf7d; }
+    .stat-change.down { color: #e05555; }
+    .stat-bg {
+      position: absolute; right: -10px; bottom: -10px;
+      opacity: .06; font-size: 72px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left; font-size: 10.5px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #c9a84c88; padding: 10px 14px;
+      border-bottom: 1px solid #c9a84c18; font-weight: 500;
+    }
+    tbody td { padding: 13px 14px; border-bottom: 1px solid #c9a84c0d; font-size: 13px; vertical-align: middle; }
+    tbody tr:hover td { background: #c9a84c06; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    }
+    .badge-active { background: #4caf7d18; color: #4caf7d; border: 1px solid #4caf7d33; }
+    .badge-pending { background: #f5a62318; color: #f5a623; border: 1px solid #f5a62333; }
+    .badge-urgent { background: #e0555518; color: #e05555; border: 1px solid #e0555533; }
+    .badge-closed { background: #70708a18; color: #70708a; border: 1px solid #70708a33; }
+    .badge-appeal { background: #5b8dee18; color: #5b8dee; border: 1px solid #5b8dee33; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 16px; border-radius: 8px; font-size: 13px;
+      font-weight: 500; cursor: pointer; border: none;
+      font-family: 'DM Sans', sans-serif; transition: all .2s;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #c9a84c, #e8c96e);
+      color: #07090f;
+    }
+    .btn-gold:hover { opacity: .9; box-shadow: 0 4px 20px #c9a84c44; }
+    .btn-outline {
+      background: none; border: 1px solid #c9a84c44; color: #c9a84c;
+    }
+    .btn-outline:hover { background: #c9a84c10; }
+    .btn-ghost { background: #0f1320; color: #9090a8; border: 1px solid #c9a84c18; }
+    .btn-ghost:hover { color: #e8e2d6; border-color: #c9a84c33; }
+
+    .sec-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .sec-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px; font-weight: 600; color: #f5f0e8;
+    }
+    .sec-subtitle { font-size: 12px; color: #70708a; margin-top: 2px; }
+
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      object-fit: cover; border: 2px solid #c9a84c22;
+    }
+
+    .progress-bar { height: 4px; background: #1a1e2d; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #c9a84c, #e8c96e); }
+
+    .timeline-item { display: flex; gap: 14px; padding-bottom: 18px; position: relative; }
+    .timeline-item:not(:last-child)::before {
+      content: ''; position: absolute; left: 17px; top: 34px;
+      width: 1px; height: calc(100% - 20px); background: #c9a84c18;
+    }
+    .timeline-dot {
+      width: 34px; height: 34px; min-width: 34px;
+      border-radius: 50%; border: 2px solid #c9a84c33;
+      background: #0f1320; display: flex; align-items: center;
+      justify-content: center; color: #c9a84c;
+    }
+
+    .hour-block {
+      background: linear-gradient(90deg, #c9a84c18, #c9a84c08);
+      border-left: 3px solid #c9a84c;
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px; margin-bottom: 10px; cursor: pointer;
+      transition: all .2s;
+    }
+    .hour-block:hover { transform: translateX(4px); background: linear-gradient(90deg, #c9a84c28, #c9a84c10); }
+
+    .tabs { display: flex; gap: 2px; background: #0f1320; padding: 4px; border-radius: 8px; border: 1px solid #c9a84c18; margin-bottom: 20px; }
+    .tab { padding: 7px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; color: #70708a; transition: all .2s; }
+    .tab.active { background: #c9a84c; color: #07090f; font-weight: 500; }
+
+    .prio-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+    .gold-line { height: 1px; background: linear-gradient(90deg, #c9a84c44, transparent); margin: 20px 0; }
+
+    .fab {
+      position: fixed; bottom: 28px; right: 28px;
+      background: linear-gradient(135deg, #c9a84c, #e8c96e);
+      color: #07090f; border: none; border-radius: 14px;
+      width: 52px; height: 52px; font-size: 24px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 8px 28px #c9a84c44;
+      transition: all .2s; z-index: 50;
+    }
+    .fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 36px #c9a84c66; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: #07090fcc; backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; z-index: 200;
+    }
+    .modal {
+      background: linear-gradient(135deg, #0d1018, #0a0c16);
+      border: 1px solid #c9a84c33; border-radius: 16px;
+      padding: 28px; width: 560px; max-width: 95vw;
+      max-height: 85vh; overflow-y: auto;
+    }
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px; font-weight: 700; color: #f5f0e8; margin-bottom: 20px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #c9a84c99; margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%; background: #0f1320; border: 1px solid #c9a84c22;
+      border-radius: 8px; padding: 10px 14px; color: #e8e2d6;
+      font-size: 13.5px; font-family: 'DM Sans', sans-serif;
+      outline: none; transition: border .2s;
+    }
+    .form-input:focus { border-color: #c9a84c66; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* TABLET */
+    @media (max-width: 1100px) {
+      .grid-4 { grid-template-columns: repeat(2,1fr); }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        height: 100vh;
+        transition: left .3s ease;
+        width: 260px;
+        min-width: 260px;
+        z-index: 1000;
+      }
+      .sidebar.mobile-open { left: 0; }
+      .sidebar.collapsed { width: 260px; min-width: 260px; left: -280px; }
+      .sidebar.collapsed.mobile-open { left: 0; }
+
+      .grid-4, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+
+      .content { padding: 16px; }
+
+      .topbar {
+        padding: 0 12px;
+        gap: 10px;
+      }
+      .topbar-title {
+        font-size: 16px;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .search-bar {
+        display: none;
+      }
+      .topbar-actions { gap: 6px; }
+      .topbar-actions > img { width: 30px !important; height: 30px !important; }
+      .icon-btn { width: 32px; height: 32px; }
+
+      .form-grid { grid-template-columns: 1fr; }
+
+      .card { padding: 16px; }
+
+      .stat-value { font-size: 28px; }
+      .stat-icon { width: 36px; height: 36px; margin-bottom: 10px; }
+      .stat-label { font-size: 11px; }
+      .stat-change { font-size: 11px; }
+
+      .sec-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .sec-title { font-size: 18px; }
+
+      .btn { padding: 8px 12px; font-size: 12px; }
+
+      .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tab {
+        white-space: nowrap;
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .table-wrap { margin: 0 -16px; padding: 0 16px; }
+      table { min-width: 700px; }
+      thead th { font-size: 9px; padding: 8px 10px; }
+      tbody td { padding: 10px; font-size: 12px; }
+
+      .modal {
+        width: 95vw;
+        padding: 20px;
+        margin: 16px;
+        max-height: 90vh;
+      }
+      .modal-title { font-size: 20px; }
+
+      .fab {
+        bottom: 20px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+      }
+
+      .avatar { width: 28px; height: 28px; }
+
+      .hour-block { padding: 10px 12px; }
+
+      .timeline-dot { width: 30px; height: 30px; min-width: 30px; }
+      .timeline-item { gap: 10px; }
+
+      .badge { font-size: 10px; padding: 2px 8px; }
+
+      .progress-bar { height: 3px; }
+
+      /* Mobile search toggle */
+      .mobile-search-btn { display: flex !important; }
+    }
+
+    /* SMALL MOBILE */
+    @media (max-width: 480px) {
+      .content { padding: 12px; }
+
+      .grid-4, .grid-2, .grid-3 { gap: 12px; margin-bottom: 16px; }
+
+      .card { padding: 14px; border-radius: 10px; }
+
+      .stat-value { font-size: 24px; }
+      .stat-icon { width: 32px; height: 32px; }
+
+      .sec-title { font-size: 16px; }
+      .sec-subtitle { font-size: 11px; }
+
+      .topbar { height: 54px; min-height: 54px; }
+      .topbar-title { font-size: 14px; }
+
+      .btn { padding: 7px 10px; font-size: 11px; gap: 5px; }
+      .btn svg { width: 12px; height: 12px; }
+
+      .modal { padding: 16px; }
+      .modal-title { font-size: 18px; margin-bottom: 16px; }
+      .form-label { font-size: 10px; }
+      .form-input { padding: 9px 12px; font-size: 13px; }
+      .form-group { margin-bottom: 12px; }
+
+      .nav-item { padding: 9px 10px; font-size: 13px; }
+
+      /* Hero banner mobile */
+      .hero-banner-text h2 { font-size: 24px !important; }
+      .hero-banner-text p { font-size: 12px !important; }
+    }
+
+    /* Landscape phones */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .content { padding: 12px 16px; }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: repeat(2, 1fr); }
+      .modal { max-height: 85vh; }
+    }
+
+    /* Touch improvements */
+    @media (hover: none) and (pointer: coarse) {
+      .nav-item { padding: 12px 10px; }
+      .tab { padding: 10px 14px; }
+      .icon-btn { min-width: 44px; min-height: 44px; }
+      .btn { min-height: 40px; }
+      .hour-block { padding: 14px; }
+    }
+
+    /* Mobile overlay */
+    .mobile-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all .3s ease;
+    }
+    .mobile-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Hide desktop search on mobile, show mobile button */
+    .mobile-search-btn { display: none; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } = Recharts;
+
+    // SVG Icons as components
+    const Icon = ({ name, size = 18, color = "currentColor" }) => {
+      const icons = {
+        dashboard: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
+        briefcase: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>,
+        clock: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+        users: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+        scale: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18"/><path d="M3 7h18"/><path d="M5 7l2 10h10l2-10"/><circle cx="5" cy="17" r="2"/><circle cx="19" cy="17" r="2"/></svg>,
+        calendar: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+        file: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
+        settings: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+        bell: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+        search: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+        menu: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+        plus: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+        x: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+        eye: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
+        edit: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+        trash: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+        download: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+        filter: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
+        gavel: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 5.5L18 9l-7.5 7.5L7 13l7.5-7.5z"/><path d="M5.5 16.5L9 20"/><path d="M15 4l2-2 5 5-2 2"/><path d="M4 20l2-2"/></svg>,
+        check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+        arrowUp: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
+        arrowDown: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>,
+        refresh: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>,
+        mail: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+        phone: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+        chart: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+        pie: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>,
+        info: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>,
+        help: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+      };
+      return icons[name] || null;
+    };
+
+    /* DATA */
+    const LAWYERS = [
+      { id: 1, name: "Dra. Valentina Torres", specialty: "Derecho Civil", cases: 12, hours: 187, avatar: "https://randomuser.me/api/portraits/women/44.jpg", status: "Activo", phone: "+52 55 1234-5678", email: "v.torres@lexfirm.com" },
+      { id: 2, name: "Dr. Rodrigo Fuentes", specialty: "Derecho Penal", cases: 8, hours: 142, avatar: "https://randomuser.me/api/portraits/men/32.jpg", status: "Activo", phone: "+52 55 2345-6789", email: "r.fuentes@lexfirm.com" },
+      { id: 3, name: "Lic. Camila Reyes", specialty: "Derecho Mercantil", cases: 15, hours: 214, avatar: "https://randomuser.me/api/portraits/women/68.jpg", status: "Activo", phone: "+52 55 3456-7890", email: "c.reyes@lexfirm.com" },
+      { id: 4, name: "Dr. Andrés Molina", specialty: "Derecho Laboral", cases: 6, hours: 98, avatar: "https://randomuser.me/api/portraits/men/75.jpg", status: "Licencia", phone: "+52 55 4567-8901", email: "a.molina@lexfirm.com" },
+      { id: 5, name: "Lic. Isabela Mendoza", specialty: "Derecho Familiar", cases: 10, hours: 160, avatar: "https://randomuser.me/api/portraits/women/21.jpg", status: "Activo", phone: "+52 55 5678-9012", email: "i.mendoza@lexfirm.com" },
+    ];
+
+    const CASES = [
+      { id: "LEX-2025-001", name: "González vs. Constructora Delta", client: "Miguel González", lawyer: "Dra. Valentina Torres", lawyerImg: "https://randomuser.me/api/portraits/women/44.jpg", tribunal: "2° Tribunal Civil CDMX", judge: "Juez Marco Salinas", status: "Activo", priority: "Alta", hours: 47, maxHours: 100, date: "12 Ene 2025", category: "Civil", nextHearing: "28 Feb 2025" },
+      { id: "LEX-2025-002", name: "Caso Fiscal Grupo Horizonte", client: "Grupo Horizonte S.A.", lawyer: "Lic. Camila Reyes", lawyerImg: "https://randomuser.me/api/portraits/women/68.jpg", tribunal: "Tribunal Fiscal Federal", judge: "Jueza Patricia Vidal", status: "Pendiente", priority: "Media", hours: 23, maxHours: 80, date: "20 Ene 2025", category: "Mercantil", nextHearing: "05 Mar 2025" },
+      { id: "LEX-2025-003", name: "Estado vs. Ramírez Ochoa", client: "Defensa E. Ramírez", lawyer: "Dr. Rodrigo Fuentes", lawyerImg: "https://randomuser.me/api/portraits/men/32.jpg", tribunal: "Juzgado Penal Norte", judge: "Juez Carlos Ibáñez", status: "Urgente", priority: "Urgente", hours: 68, maxHours: 120, date: "03 Feb 2025", category: "Penal", nextHearing: "21 Feb 2025" },
+      { id: "LEX-2025-004", name: "Divorcio Herrera-Castillo", client: "Ana Herrera", lawyer: "Lic. Isabela Mendoza", lawyerImg: "https://randomuser.me/api/portraits/women/21.jpg", tribunal: "Tribunal Familiar CDMX", judge: "Jueza Sofía Blanco", status: "Activo", priority: "Media", hours: 31, maxHours: 60, date: "14 Feb 2025", category: "Familiar", nextHearing: "10 Mar 2025" },
+      { id: "LEX-2025-005", name: "Despido Injustificado López", client: "Pedro López", lawyer: "Dr. Andrés Molina", lawyerImg: "https://randomuser.me/api/portraits/men/75.jpg", tribunal: "Junta Local Conciliación", judge: "Árbitro Luis Peña", status: "Apelación", priority: "Media", hours: 55, maxHours: 90, date: "08 Ene 2025", category: "Laboral", nextHearing: "15 Mar 2025" },
+      { id: "LEX-2025-006", name: "Sucesión Testamentaria Mora", client: "Familia Mora", lawyer: "Dra. Valentina Torres", lawyerImg: "https://randomuser.me/api/portraits/women/44.jpg", tribunal: "Notaría Pública 42", judge: "Notario R. Esperanza", status: "Cerrado", priority: "Baja", hours: 28, maxHours: 40, date: "10 Nov 2024", category: "Civil", nextHearing: "—" },
+      { id: "LEX-2025-007", name: "Fusión Empresarial TechMX", client: "TechMX Group", lawyer: "Lic. Camila Reyes", lawyerImg: "https://randomuser.me/api/portraits/women/68.jpg", tribunal: "COFECE", judge: "Comisionado A. Ríos", status: "Activo", priority: "Alta", hours: 82, maxHours: 150, date: "01 Feb 2025", category: "Mercantil", nextHearing: "25 Feb 2025" },
+    ];
+
+    const HOURS_DATA = [
+      { mes: "Sep", horas: 312, meta: 350 }, { mes: "Oct", horas: 398, meta: 350 },
+      { mes: "Nov", horas: 287, meta: 350 }, { mes: "Dic", horas: 220, meta: 350 },
+      { mes: "Ene", horas: 401, meta: 350 }, { mes: "Feb", horas: 344, meta: 350 },
+    ];
+
+    const CASE_TYPE_DATA = [
+      { name: "Civil", value: 32, color: "#c9a84c" },
+      { name: "Penal", value: 18, color: "#e05555" },
+      { name: "Mercantil", value: 28, color: "#5b8dee" },
+      { name: "Laboral", value: 14, color: "#4caf7d" },
+      { name: "Familiar", value: 8, color: "#b06bd4" },
+    ];
+
+    const TIME_ENTRIES = [
+      { id: 1, case: "LEX-2025-003", caseName: "Estado vs. Ramírez Ochoa", lawyer: "Dr. Rodrigo Fuentes", lawyerImg: "https://randomuser.me/api/portraits/men/32.jpg", hours: 3.5, date: "Hoy 09:00", desc: "Revisión de expediente y preparación de defensa", billable: true },
+      { id: 2, case: "LEX-2025-007", caseName: "Fusión TechMX", lawyer: "Lic. Camila Reyes", lawyerImg: "https://randomuser.me/api/portraits/women/68.jpg", hours: 5.0, date: "Hoy 08:30", desc: "Due diligence y análisis regulatorio COFECE", billable: true },
+      { id: 3, case: "LEX-2025-001", caseName: "González vs. Constructora Delta", lawyer: "Dra. Valentina Torres", lawyerImg: "https://randomuser.me/api/portraits/women/44.jpg", hours: 2.0, date: "Ayer 14:00", desc: "Llamada cliente y revisión de pruebas", billable: false },
+      { id: 4, case: "LEX-2025-004", caseName: "Divorcio Herrera-Castillo", lawyer: "Lic. Isabela Mendoza", lawyerImg: "https://randomuser.me/api/portraits/women/21.jpg", hours: 1.5, date: "Ayer 10:00", desc: "Audiencia de mediación familiar", billable: true },
+      { id: 5, case: "LEX-2025-002", caseName: "Caso Fiscal Grupo Horizonte", lawyer: "Lic. Camila Reyes", lawyerImg: "https://randomuser.me/api/portraits/women/68.jpg", hours: 4.0, date: "19 Feb", desc: "Preparación de alegatos y documentación fiscal", billable: true },
+    ];
+
+    const HEARINGS = [
+      { date: "21 Feb", case: "Estado vs. Ramírez", tribunal: "Juzgado Penal Norte", time: "09:00", type: "Urgente" },
+      { date: "25 Feb", case: "Fusión TechMX", tribunal: "COFECE", time: "11:30", type: "Activo" },
+      { date: "28 Feb", case: "González vs. Delta", tribunal: "2° Tribunal Civil", time: "10:00", type: "Activo" },
+      { date: "05 Mar", case: "Grupo Horizonte", tribunal: "Tribunal Fiscal", time: "09:30", type: "Pendiente" },
+      { date: "10 Mar", case: "Divorcio Herrera", tribunal: "Tribunal Familiar", time: "12:00", type: "Activo" },
+    ];
+
+    const ACTIVITY = [
+      { icon: "gavel", text: "Audiencia registrada: Estado vs. Ramírez", time: "Hace 20 min", color: "#e05555" },
+      { icon: "file", text: "Nuevo documento adjunto en LEX-2025-007", time: "Hace 1h", color: "#5b8dee" },
+      { icon: "clock", text: "5h registradas — Lic. Camila Reyes", time: "Hace 2h", color: "#c9a84c" },
+      { icon: "check", text: "Caso LEX-2024-006 marcado como Cerrado", time: "Ayer", color: "#4caf7d" },
+      { icon: "users", text: "Cliente TechMX Group añadido al sistema", time: "Ayer", color: "#b06bd4" },
+    ];
+
+    /* HELPERS */
+    const statusBadge = (s) => {
+      const map = { Activo: "badge-active", Pendiente: "badge-pending", Urgente: "badge-urgent", Cerrado: "badge-closed", Apelación: "badge-appeal" };
+      const dots = { Activo: "#4caf7d", Pendiente: "#f5a623", Urgente: "#e05555", Cerrado: "#70708a", Apelación: "#5b8dee" };
+      return <span className={`badge ${map[s] || "badge-pending"}`}><span className="prio-dot" style={{ background: dots[s] || "#f5a623" }} />{s}</span>;
+    };
+
+    const CustomTooltip = ({ active, payload, label, type }) => {
+      if (active && payload?.length) {
+        return (
+          <div style={{ background: "#0d1018", border: "1px solid #c9a84c33", borderRadius: 8, padding: "12px 16px", minWidth: 150 }}>
+            <p style={{ color: "#c9a84c", fontSize: 13, fontWeight: 600, marginBottom: 8, borderBottom: "1px solid #c9a84c22", paddingBottom: 6 }}>{label}</p>
+            {payload.map((p, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <span style={{ color: "#9090a8", fontSize: 12 }}>{p.name}:</span>
+                <span style={{ color: p.color || "#e8e2d6", fontSize: 13, fontWeight: 600 }}>
+                  {p.name === "Horas" || p.name === "Meta" ? `${p.value}h` : p.value}
+                  {p.name === "Horas" && type === "hours" && " trabajadas"}
+                </span>
+              </div>
+            ))}
+            {type === "hours" && payload[0] && payload[1] && (
+              <div style={{ marginTop: 8, paddingTop: 6, borderTop: "1px solid #c9a84c22" }}>
+                <span style={{ fontSize: 11, color: payload[0].value >= payload[1].value ? "#4caf7d" : "#e05555" }}>
+                  {payload[0].value >= payload[1].value ? "✓ Meta alcanzada" : `Faltan ${payload[1].value - payload[0].value}h para la meta`}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      }
+      return null;
+    };
+
+    const PieTooltip = ({ active, payload }) => {
+      if (active && payload?.length) {
+        const total = CASE_TYPE_DATA.reduce((a, b) => a + b.value, 0);
+        const percentage = ((payload[0].value / total) * 100).toFixed(1);
+        return (
+          <div style={{ background: "#0d1018", border: "1px solid #c9a84c33", borderRadius: 8, padding: "12px 16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: payload[0].payload.color }} />
+              <span style={{ color: "#e8e2d6", fontSize: 13, fontWeight: 600 }}>{payload[0].name}</span>
+            </div>
+            <div style={{ color: "#9090a8", fontSize: 12 }}>
+              <p><b style={{ color: "#c9a84c" }}>{payload[0].value}</b> casos activos</p>
+              <p style={{ marginTop: 4 }}><b style={{ color: "#c9a84c" }}>{percentage}%</b> del total</p>
+            </div>
+          </div>
+        );
+      }
+      return null;
+    };
+
+    /* DASHBOARD */
+    function Dashboard() {
+      const [count, setCount] = useState({ cases: 0, hours: 0, lawyers: 0, hearings: 0 });
+      useEffect(() => {
+        const targets = { cases: 51, hours: 641, lawyers: 5, hearings: 12 };
+        const dur = 1200; const steps = 40; const interval = dur / steps;
+        let step = 0;
+        const t = setInterval(() => {
+          step++;
+          const p = step / steps;
+          setCount({ cases: Math.round(targets.cases * p), hours: Math.round(targets.hours * p), lawyers: Math.round(targets.lawyers * p), hearings: Math.round(targets.hearings * p) });
+          if (step >= steps) clearInterval(t);
+        }, interval);
+        return () => clearInterval(t);
+      }, []);
+
+      const stats = [
+        { icon: "briefcase", val: count.cases, label: "Casos Activos", sublabel: "En proceso actualmente", change: "+8%", changeLabel: "vs mes anterior", up: true, color: "#c9a84c", bg: "#c9a84c18" },
+        { icon: "clock", val: count.hours, label: "Horas Facturables", sublabel: "Registradas este mes", change: "+12%", changeLabel: "vs mes anterior", up: true, color: "#5b8dee", bg: "#5b8dee18", suffix: "h" },
+        { icon: "users", val: count.lawyers, label: "Abogados Activos", sublabel: "Disponibles en el despacho", change: "=", changeLabel: "sin cambios", up: null, color: "#4caf7d", bg: "#4caf7d18" },
+        { icon: "gavel", val: count.hearings, label: "Audiencias Programadas", sublabel: "Durante febrero 2025", change: "-2", changeLabel: "vs mes anterior", up: false, color: "#e05555", bg: "#e0555518" },
+      ];
+
+      return (
+        <>
+          {/* HERO BANNER */}
+          <div className="card" style={{ marginBottom: 20, position: "relative", overflow: "hidden", padding: 0, border: "none" }}>
+            <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1400&q=80" alt="Law" style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 12, display: "block", filter: "brightness(.35)" }} />
+            <div style={{ position: "absolute", inset: 0, padding: "28px 32px", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+              <p style={{ fontSize: 11, letterSpacing: 3, textTransform: "uppercase", color: "#c9a84c", marginBottom: 6 }}>Panel de Control</p>
+              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, fontWeight: 700, color: "#f5f0e8", lineHeight: 1.1 }}>Bienvenido de regreso,<br /><span style={{ color: "#c9a84c" }}>Dr. Alejandro Vargas</span></h2>
+              <p style={{ color: "#9090a8", fontSize: 13, marginTop: 6 }}>Tienes <b style={{ color: "#e05555" }}>3 audiencias urgentes</b> esta semana · Jueves 20 Feb 2025</p>
+            </div>
+          </div>
+
+          {/* STATS */}
+          <div className="grid-4">
+            {stats.map((s, i) => (
+              <div key={i} className="card stat-card">
+                <div className="stat-icon" style={{ background: s.bg, color: s.color }}><Icon name={s.icon} size={20} /></div>
+                <div className="stat-value">{s.val}{s.suffix || ""}</div>
+                <div className="stat-label">{s.label}</div>
+                <div style={{ fontSize: 10, color: "#555568", marginTop: 2 }}>{s.sublabel}</div>
+                {s.up !== null ? (
+                  <div className={`stat-change ${s.up ? "up" : "down"}`}>
+                    <Icon name={s.up ? "arrowUp" : "arrowDown"} size={13} />
+                    <span style={{ fontWeight: 600 }}>{s.change}</span>
+                    <span style={{ color: "#70708a", marginLeft: 4 }}>{s.changeLabel}</span>
+                  </div>
+                ) : (
+                  <div className="stat-change" style={{ color: "#70708a" }}>
+                    <span style={{ fontWeight: 600 }}>{s.change}</span>
+                    <span style={{ marginLeft: 4 }}>{s.changeLabel}</span>
+                  </div>
+                )}
+                <div className="stat-bg"><Icon name={s.icon} size={72} color={s.color} /></div>
+              </div>
+            ))}
+          </div>
+
+          {/* CHARTS */}
+          <div className="grid-2">
+            <div className="card">
+              <div className="sec-header">
+                <div>
+                  <div className="sec-title">Horas Facturables por Mes</div>
+                  <div className="sec-subtitle">Comparativa con meta mensual de 350 horas</div>
+                </div>
+                <Icon name="chart" size={18} color="#c9a84c88" />
+              </div>
+
+              {/* Summary stats */}
+              <div style={{ display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 12, height: 3, background: "#c9a84c", borderRadius: 2 }} />
+                  <span style={{ fontSize: 11, color: "#9090a8" }}>Horas trabajadas</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 12, height: 2, background: "#c9a84c44", borderRadius: 2, border: "1px dashed #c9a84c" }} />
+                  <span style={{ fontSize: 11, color: "#9090a8" }}>Meta: 350h/mes</span>
+                </div>
+                <div style={{ marginLeft: "auto", fontSize: 11 }}>
+                  <span style={{ color: "#9090a8" }}>Promedio: </span>
+                  <span style={{ color: "#c9a84c", fontWeight: 600 }}>{Math.round(HOURS_DATA.reduce((a,b) => a + b.horas, 0) / HOURS_DATA.length)}h/mes</span>
+                </div>
+              </div>
+
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={HOURS_DATA} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradH" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#c9a84c" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#c9a84c" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#c9a84c0d" />
+                  <XAxis dataKey="mes" stroke="#70708a" tick={{ fontSize: 11 }} axisLine={{ stroke: "#c9a84c22" }} />
+                  <YAxis stroke="#70708a" tick={{ fontSize: 11 }} axisLine={{ stroke: "#c9a84c22" }} tickFormatter={(v) => `${v}h`} />
+                  <Tooltip content={<CustomTooltip type="hours" />} />
+                  <Area type="monotone" dataKey="horas" stroke="#c9a84c" fill="url(#gradH)" strokeWidth={2} name="Horas" dot={{ fill: "#c9a84c", r: 4 }} activeDot={{ r: 6, fill: "#e8c96e" }} />
+                  <Area type="monotone" dataKey="meta" stroke="#c9a84c44" fill="none" strokeWidth={1} strokeDasharray="4 4" name="Meta" />
+                </AreaChart>
+              </ResponsiveContainer>
+
+              {/* Monthly breakdown */}
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px solid #c9a84c18", fontSize: 10 }}>
+                {HOURS_DATA.map((d, i) => (
+                  <div key={i} style={{ textAlign: "center" }}>
+                    <div style={{ color: d.horas >= d.meta ? "#4caf7d" : "#e05555", fontWeight: 600 }}>
+                      {d.horas >= d.meta ? "✓" : `−${d.meta - d.horas}`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="sec-header">
+                <div>
+                  <div className="sec-title">Distribución de Casos por Área</div>
+                  <div className="sec-subtitle">{CASE_TYPE_DATA.reduce((a,b) => a + b.value, 0)} casos activos en total</div>
+                </div>
+                <Icon name="pie" size={18} color="#c9a84c88" />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ position: "relative", width: "55%" }}>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie data={CASE_TYPE_DATA} cx="50%" cy="50%" innerRadius={52} outerRadius={80} paddingAngle={3} dataKey="value">
+                        {CASE_TYPE_DATA.map((e, i) => <Cell key={i} fill={e.color} />)}
+                      </Pie>
+                      <Tooltip content={<PieTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  {/* Center label */}
+                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center", pointerEvents: "none" }}>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: "#c9a84c", fontFamily: "'Cormorant Garamond',serif" }}>
+                      {CASE_TYPE_DATA.reduce((a,b) => a + b.value, 0)}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#70708a" }}>casos</div>
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  {CASE_TYPE_DATA.map((d, i) => {
+                    const total = CASE_TYPE_DATA.reduce((a, b) => a + b.value, 0);
+                    const pct = ((d.value / total) * 100).toFixed(0);
+                    return (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: d.color, minWidth: 10 }} />
+                        <span style={{ fontSize: 12, color: "#9090a8", flex: 1 }}>{d.name}</span>
+                        <span style={{ fontSize: 11, color: "#70708a", marginRight: 4 }}>{pct}%</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#e8e2d6", minWidth: 24, textAlign: "right" }}>{d.value}</span>
+                      </div>
+                    );
+                  })}
+                  <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid #c9a84c18", fontSize: 11, color: "#70708a" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Mayor carga:</span>
+                      <span style={{ color: "#c9a84c" }}>{CASE_TYPE_DATA.reduce((a, b) => a.value > b.value ? a : b).name}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RECENT CASES + ACTIVITY */}
+          <div className="grid-2">
+            <div className="card">
+              <div className="sec-header">
+                <div><div className="sec-title">Casos Recientes</div></div>
+                <button className="btn btn-ghost" style={{ padding: "6px 12px", fontSize: 12 }}>Ver todos</button>
+              </div>
+              {CASES.slice(0, 4).map(c => (
+                <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid #c9a84c0d" }}>
+                  <img src={c.lawyerImg} alt="" className="avatar" />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "#e8e2d6", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
+                    <p style={{ fontSize: 11, color: "#70708a" }}>{c.lawyer} · {c.judge}</p>
+                  </div>
+                  {statusBadge(c.status)}
+                </div>
+              ))}
+            </div>
+
+            <div className="card">
+              <div className="sec-header"><div className="sec-title">Actividad Reciente</div></div>
+              {ACTIVITY.map((a, i) => (
+                <div key={i} className="timeline-item">
+                  <div className="timeline-dot" style={{ borderColor: a.color + "66", color: a.color }}><Icon name={a.icon} size={14} /></div>
+                  <div>
+                    <p style={{ fontSize: 13, color: "#e8e2d6" }}>{a.text}</p>
+                    <p style={{ fontSize: 11, color: "#70708a", marginTop: 2 }}>{a.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* PRÓXIMAS AUDIENCIAS */}
+          <div className="card">
+            <div className="sec-header">
+              <div><div className="sec-title">Próximas Audiencias</div><div className="sec-subtitle">{HEARINGS.length} audiencias programadas este mes</div></div>
+              <button className="btn btn-outline" style={{ padding: "7px 14px", fontSize: 12 }}><Icon name="calendar" size={14} />Calendario completo</button>
+            </div>
+
+            {/* Audiencias Legend */}
+            <div style={{ display: "flex", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#e05555" }} />
+                <span style={{ color: "#9090a8" }}>Urgente = Requiere atención prioritaria</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf7d" }} />
+                <span style={{ color: "#9090a8" }}>Activo = En proceso normal</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#f5a623" }} />
+                <span style={{ color: "#9090a8" }}>Pendiente = Esperando resolución</span>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4 }}>
+              {HEARINGS.map((h, i) => (
+                <div key={i} style={{ minWidth: 200, background: "#0f1320", border: "1px solid #c9a84c18", borderRadius: 10, padding: "14px 16px" }}>
+                  <p style={{ fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", color: "#c9a84c", marginBottom: 6 }}>{h.date} · {h.time}</p>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: "#e8e2d6", marginBottom: 4 }}>{h.case}</p>
+                  <p style={{ fontSize: 11, color: "#70708a", marginBottom: 2 }}>{h.tribunal}</p>
+                  <p style={{ fontSize: 10, color: "#555568" }}>Audiencia programada</p>
+                  <div style={{ marginTop: 8 }}>{statusBadge(h.type)}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 12, fontSize: 10, color: "#555568", display: "flex", alignItems: "center", gap: 6 }}>
+              <Icon name="info" size={12} />
+              <span>Desliza horizontalmente para ver más audiencias. Haz clic en "Calendario completo" para ver todas.</span>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    /* CASES */
+    function Cases({ onAdd }) {
+      const [filter, setFilter] = useState("Todos");
+      const [search, setSearch] = useState("");
+      const [selected, setSelected] = useState(null);
+      const [showFilters, setShowFilters] = useState(false);
+      const [filterLawyer, setFilterLawyer] = useState("Todos");
+      const [filterTribunal, setFilterTribunal] = useState("Todos");
+      const [filterJudge, setFilterJudge] = useState("Todos");
+      const [filterCategory, setFilterCategory] = useState("Todos");
+
+      const tabs = ["Todos", "Activo", "Urgente", "Pendiente", "Apelación", "Cerrado"];
+
+      // Get unique values for filters
+      const lawyers = ["Todos", ...new Set(CASES.map(c => c.lawyer))];
+      const tribunals = ["Todos", ...new Set(CASES.map(c => c.tribunal))];
+      const judges = ["Todos", ...new Set(CASES.map(c => c.judge))];
+      const categories = ["Todos", ...new Set(CASES.map(c => c.category))];
+
+      const filtered = CASES.filter(c => {
+        const matchTab = filter === "Todos" || c.status === filter;
+        const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
+                           c.client.toLowerCase().includes(search.toLowerCase()) ||
+                           c.lawyer.toLowerCase().includes(search.toLowerCase());
+        const matchLawyer = filterLawyer === "Todos" || c.lawyer === filterLawyer;
+        const matchTribunal = filterTribunal === "Todos" || c.tribunal === filterTribunal;
+        const matchJudge = filterJudge === "Todos" || c.judge === filterJudge;
+        const matchCategory = filterCategory === "Todos" || c.category === filterCategory;
+        return matchTab && matchSearch && matchLawyer && matchTribunal && matchJudge && matchCategory;
+      });
+
+      const activeFilters = [filterLawyer, filterTribunal, filterJudge, filterCategory].filter(f => f !== "Todos").length;
+
+      const clearFilters = () => {
+        setFilterLawyer("Todos");
+        setFilterTribunal("Todos");
+        setFilterJudge("Todos");
+        setFilterCategory("Todos");
+        setSearch("");
+        setFilter("Todos");
+      };
+
+      // Calculate case stats
+      const statusCounts = CASES.reduce((acc, c) => { acc[c.status] = (acc[c.status] || 0) + 1; return acc; }, {});
+
+      return (
+        <>
+          <div className="sec-header">
+            <div><div className="sec-title">Gestión de Casos</div><div className="sec-subtitle">{filtered.length} de {CASES.length} casos</div></div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button className="btn btn-ghost"><Icon name="download" size={14} />Exportar</button>
+              <button className="btn btn-gold" onClick={onAdd}><Icon name="plus" size={14} />Nuevo Caso</button>
+            </div>
+          </div>
+
+          {/* Info Banner */}
+          <div className="card" style={{ background: "linear-gradient(135deg, #5b8dee11 0%, #5b8dee05 100%)", border: "1px solid #5b8dee33", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#5b8dee22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Icon name="briefcase" size={18} color="#5b8dee" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#5b8dee", marginBottom: 4 }}>Sistema de Gestión de Expedientes</div>
+                <div style={{ fontSize: 12, color: "#9090a8", lineHeight: 1.5 }}>
+                  Todos los casos del despacho organizados por estado. Usa los <strong>filtros avanzados</strong> para buscar por abogado, tribunal, juez o área legal. Haz clic en cualquier caso para ver detalles completos.
+                </div>
+                <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
+                  {Object.entries(statusCounts).map(([status, count]) => (
+                    <span key={status} style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: status === "Activo" ? "#4caf7d" : status === "Urgente" ? "#e05555" : status === "Pendiente" ? "#f5a623" : status === "Cerrado" ? "#70708a" : "#5b8dee" }} />
+                      <span style={{ color: "#9090a8" }}>{status}: <strong style={{ color: "#e8e2d6" }}>{count}</strong></span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+            <div className="search-bar" style={{ maxWidth: "none", flex: 1, minWidth: 200, display: "flex" }}>
+              <Icon name="search" size={15} color="#555568" />
+              <input placeholder="Buscar por caso, cliente, abogado…" value={search} onChange={e => setSearch(e.target.value)} />
+              {search && (
+                <button style={{ background: "none", border: "none", color: "#9090a8", cursor: "pointer" }} onClick={() => setSearch("")}>
+                  <Icon name="x" size={14} />
+                </button>
+              )}
+            </div>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setShowFilters(!showFilters)}
+              style={{ position: "relative" }}
+            >
+              <Icon name="filter" size={14} />
+              Filtros
+              {activeFilters > 0 && (
+                <span style={{
+                  position: "absolute", top: -6, right: -6,
+                  background: "#c9a84c", color: "#07090f",
+                  width: 18, height: 18, borderRadius: "50%",
+                  fontSize: 10, fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center"
+                }}>{activeFilters}</span>
+              )}
+            </button>
+            {activeFilters > 0 && (
+              <button className="btn btn-outline" onClick={clearFilters} style={{ padding: "6px 12px", fontSize: 12 }}>
+                <Icon name="x" size={12} />Limpiar
+              </button>
+            )}
+          </div>
+
+          {/* Advanced Filters Panel */}
+          {showFilters && (
+            <div className="card" style={{ marginBottom: 16, padding: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: "#c9a84c" }}>Filtros Avanzados</span>
+                <button
+                  style={{ background: "none", border: "none", color: "#9090a8", cursor: "pointer" }}
+                  onClick={() => setShowFilters(false)}
+                >
+                  <Icon name="x" size={16} />
+                </button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                <div>
+                  <label className="form-label" style={{ marginBottom: 4 }}>Abogado</label>
+                  <select
+                    className="form-input"
+                    value={filterLawyer}
+                    onChange={e => setFilterLawyer(e.target.value)}
+                    style={{ padding: "8px 10px", fontSize: 12 }}
+                  >
+                    {lawyers.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label" style={{ marginBottom: 4 }}>Tribunal</label>
+                  <select
+                    className="form-input"
+                    value={filterTribunal}
+                    onChange={e => setFilterTribunal(e.target.value)}
+                    style={{ padding: "8px 10px", fontSize: 12 }}
+                  >
+                    {tribunals.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label" style={{ marginBottom: 4 }}>Juez / Árbitro</label>
+                  <select
+                    className="form-input"
+                    value={filterJudge}
+                    onChange={e => setFilterJudge(e.target.value)}
+                    style={{ padding: "8px 10px", fontSize: 12 }}
+                  >
+                    {judges.map(j => <option key={j} value={j}>{j}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label" style={{ marginBottom: 4 }}>Área Legal</label>
+                  <select
+                    className="form-input"
+                    value={filterCategory}
+                    onChange={e => setFilterCategory(e.target.value)}
+                    style={{ padding: "8px 10px", fontSize: 12 }}
+                  >
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Active filter tags */}
+              {activeFilters > 0 && (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, paddingTop: 12, borderTop: "1px solid #c9a84c18" }}>
+                  {filterLawyer !== "Todos" && (
+                    <span className="badge badge-active" style={{ cursor: "pointer" }} onClick={() => setFilterLawyer("Todos")}>
+                      <Icon name="users" size={10} />{filterLawyer.split(" ").slice(0,2).join(" ")}<Icon name="x" size={10} />
+                    </span>
+                  )}
+                  {filterTribunal !== "Todos" && (
+                    <span className="badge badge-appeal" style={{ cursor: "pointer" }} onClick={() => setFilterTribunal("Todos")}>
+                      <Icon name="scale" size={10} />{filterTribunal.length > 20 ? filterTribunal.slice(0,20) + "…" : filterTribunal}<Icon name="x" size={10} />
+                    </span>
+                  )}
+                  {filterJudge !== "Todos" && (
+                    <span className="badge badge-pending" style={{ cursor: "pointer" }} onClick={() => setFilterJudge("Todos")}>
+                      <Icon name="gavel" size={10} />{filterJudge}<Icon name="x" size={10} />
+                    </span>
+                  )}
+                  {filterCategory !== "Todos" && (
+                    <span className="badge badge-closed" style={{ cursor: "pointer" }} onClick={() => setFilterCategory("Todos")}>
+                      {filterCategory}<Icon name="x" size={10} />
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="tabs">
+            {tabs.map(t => <span key={t} className={`tab ${filter === t ? "active" : ""}`} onClick={() => setFilter(t)}>{t}</span>)}
+          </div>
+
+          <div className="card">
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Expediente</th><th>Caso / Cliente</th><th>Abogado</th>
+                    <th>Tribunal</th><th>Juez</th><th>Horas</th>
+                    <th>Status</th><th>Próx. Audiencia</th><th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(c => (
+                    <tr key={c.id} style={{ cursor: "pointer" }} onClick={() => setSelected(c)}>
+                      <td><span style={{ fontSize: 11, color: "#c9a84c", fontFamily: "monospace" }}>{c.id}</span></td>
+                      <td>
+                        <p style={{ fontWeight: 500, color: "#e8e2d6", fontSize: 13 }}>{c.name}</p>
+                        <p style={{ fontSize: 11, color: "#70708a" }}>{c.client}</p>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <img src={c.lawyerImg} alt="" className="avatar" />
+                          <span style={{ fontSize: 12 }}>{c.lawyer.split(" ").slice(0, 2).join(" ")}</span>
+                        </div>
+                      </td>
+                      <td style={{ fontSize: 12, color: "#9090a8" }}>{c.tribunal}</td>
+                      <td style={{ fontSize: 12, color: "#9090a8" }}>{c.judge}</td>
+                      <td>
+                        <div style={{ marginBottom: 4, fontSize: 12 }}>{c.hours}h / {c.maxHours}h</div>
+                        <div className="progress-bar" style={{ width: 80 }}>
+                          <div className="progress-fill" style={{ width: `${(c.hours / c.maxHours) * 100}%`, background: c.hours / c.maxHours > .8 ? "#e05555" : "linear-gradient(90deg,#c9a84c,#e8c96e)" }} />
+                        </div>
+                      </td>
+                      <td>{statusBadge(c.status)}</td>
+                      <td style={{ fontSize: 12, color: "#70708a" }}>{c.nextHearing}</td>
+                      <td>
+                        <div style={{ display: "flex", gap: 4 }}>
+                          <button className="icon-btn" style={{ width: 28, height: 28 }} onClick={e => { e.stopPropagation(); setSelected(c); }}><Icon name="eye" size={13} /></button>
+                          <button className="icon-btn" style={{ width: 28, height: 28 }} onClick={e => e.stopPropagation()}><Icon name="edit" size={13} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {selected && (
+            <div className="modal-overlay" onClick={() => setSelected(null)}>
+              <div className="modal" onClick={e => e.stopPropagation()}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                  <div>
+                    <p style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "#c9a84c", marginBottom: 4 }}>{selected.id} · {selected.category}</p>
+                    <div className="modal-title" style={{ marginBottom: 0 }}>{selected.name}</div>
+                  </div>
+                  <button className="icon-btn" onClick={() => setSelected(null)}><Icon name="x" size={16} /></button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
+                  {[
+                    { label: "Cliente", val: selected.client },
+                    { label: "Área", val: selected.category },
+                    { label: "Status", val: statusBadge(selected.status) },
+                    { label: "Prioridad", val: selected.priority },
+                    { label: "Fecha Inicio", val: selected.date },
+                    { label: "Próx. Audiencia", val: selected.nextHearing },
+                  ].map((f, i) => (
+                    <div key={i} style={{ background: "#0f1320", borderRadius: 8, padding: "12px 14px", border: "1px solid #c9a84c18" }}>
+                      <p style={{ fontSize: 10, color: "#c9a84c88", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>{f.label}</p>
+                      <p style={{ fontSize: 13, color: "#e8e2d6", fontWeight: 500 }}>{f.val}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="gold-line" />
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                  {[
+                    { icon: "users", label: "Abogado Asignado", val: selected.lawyer },
+                    { icon: "scale", label: "Tribunal", val: selected.tribunal },
+                    { icon: "gavel", label: "Juez / Árbitro", val: selected.judge },
+                  ].map((r, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, background: "#0f1320", borderRadius: 8, padding: "12px 14px", border: "1px solid #c9a84c18" }}>
+                      <div style={{ color: "#c9a84c" }}><Icon name={r.icon} size={15} /></div>
+                      <div>
+                        <p style={{ fontSize: 10, color: "#70708a", marginBottom: 2 }}>{r.label}</p>
+                        <p style={{ fontSize: 13, fontWeight: 500 }}>{r.val}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 11, color: "#c9a84c88", marginBottom: 6 }}>HORAS TRABAJADAS</p>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 13 }}>{selected.hours}h de {selected.maxHours}h</span>
+                    <span style={{ fontSize: 13, color: "#c9a84c" }}>{Math.round((selected.hours / selected.maxHours) * 100)}%</span>
+                  </div>
+                  <div className="progress-bar" style={{ height: 6 }}>
+                    <div className="progress-fill" style={{ width: `${(selected.hours / selected.maxHours) * 100}%`, background: selected.hours / selected.maxHours > .8 ? "#e05555" : undefined }} />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="btn btn-gold" style={{ flex: 1 }}><Icon name="clock" size={14} />Registrar Horas</button>
+                  <button className="btn btn-outline"><Icon name="file" size={14} />Documentos</button>
+                  <button className="btn btn-ghost"><Icon name="edit" size={14} />Editar</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    /* HOURS */
+    function Hours() {
+      const total = TIME_ENTRIES.reduce((a, b) => a + b.hours, 0);
+      const billable = TIME_ENTRIES.filter(e => e.billable).reduce((a, b) => a + b.hours, 0);
+      const nonBillable = total - billable;
+      const billablePercent = Math.round((billable / total) * 100);
+      const avgPerDay = (total / 5).toFixed(1); // Assuming 5 working days shown
+
+      return (
+        <>
+          <div className="sec-header">
+            <div>
+              <div className="sec-title">Centro de Horas</div>
+              <div className="sec-subtitle">Control y registro de tiempo facturable por caso y abogado</div>
+            </div>
+            <button className="btn btn-gold"><Icon name="plus" size={14} />Registrar Tiempo</button>
+          </div>
+
+          {/* Info banner */}
+          <div style={{ background: "linear-gradient(90deg, #c9a84c18, #c9a84c08)", border: "1px solid #c9a84c22", borderRadius: 10, padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <Icon name="clock" size={18} color="#c9a84c" />
+            <span style={{ fontSize: 12, color: "#e8e2d6" }}>
+              <b style={{ color: "#c9a84c" }}>Tip:</b> Las horas facturables son aquellas que se cobran al cliente. Las horas internas (reuniones, capacitación) no se facturan.
+            </span>
+          </div>
+
+          <div className="grid-3" style={{ marginBottom: 20 }}>
+            {[
+              {
+                label: "Total de Horas",
+                val: `${total}h`,
+                sub: "Registradas en febrero 2025",
+                detail: `Promedio: ${avgPerDay}h por día laboral`,
+                color: "#c9a84c",
+                icon: "clock"
+              },
+              {
+                label: "Horas Facturables",
+                val: `${billable}h`,
+                sub: `${billablePercent}% del tiempo registrado`,
+                detail: "Se cobran al cliente final",
+                color: "#4caf7d",
+                icon: "check"
+              },
+              {
+                label: "Horas Internas",
+                val: `${nonBillable.toFixed(1)}h`,
+                sub: `${100 - billablePercent}% del tiempo registrado`,
+                detail: "Administrativo, reuniones, capacitación",
+                color: "#70708a",
+                icon: "file"
+              },
+            ].map((s, i) => (
+              <div key={i} className="card" style={{ textAlign: "center", position: "relative" }}>
+                <div style={{ position: "absolute", top: 12, right: 12, opacity: 0.3 }}>
+                  <Icon name={s.icon} size={20} color={s.color} />
+                </div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 42, fontWeight: 700, color: s.color }}>{s.val}</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "#e8e2d6", marginTop: 4 }}>{s.label}</div>
+                <div style={{ fontSize: 11, color: "#9090a8", marginTop: 2 }}>{s.sub}</div>
+                <div style={{ fontSize: 10, color: "#555568", marginTop: 6, fontStyle: "italic" }}>{s.detail}</div>
+                {i === 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <div className="progress-bar" style={{ height: 6 }}>
+                      <div className="progress-fill" style={{ width: `${billablePercent}%`, background: "#4caf7d" }} />
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 9, color: "#70708a" }}>
+                      <span>Facturable ({billablePercent}%)</span>
+                      <span>Interno ({100-billablePercent}%)</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid-2">
+            <div className="card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div>
+                  <div className="sec-title">Últimas Entradas de Tiempo</div>
+                  <div style={{ fontSize: 11, color: "#70708a" }}>{TIME_ENTRIES.length} registros recientes</div>
+                </div>
+                <button className="btn btn-ghost" style={{ padding: "6px 10px", fontSize: 11 }}>Ver todos</button>
+              </div>
+              {TIME_ENTRIES.map(e => (
+                <div key={e.id} className="hour-block">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <img src={e.lawyerImg} alt="" className="avatar" style={{ width: 26, height: 26 }} />
+                      <span style={{ fontSize: 12, color: "#9090a8" }}>{e.lawyer.split(" ").slice(0, 2).join(" ")}</span>
+                      <span style={{ fontSize: 10, letterSpacing: 1, color: "#c9a84c88", fontFamily: "monospace" }}>{e.case}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontWeight: 700, color: "#c9a84c" }}>{e.hours}h</span>
+                      <span className={`badge ${e.billable ? "badge-active" : "badge-closed"}`} style={{ fontSize: 10 }}>
+                        {e.billable ? "💰 Facturable" : "📋 Interno"}
+                      </span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 13, color: "#e8e2d6", fontWeight: 500 }}>{e.caseName}</p>
+                  <p style={{ fontSize: 11, color: "#70708a", marginTop: 3 }}>
+                    <span style={{ color: "#9090a8" }}>Actividad:</span> {e.desc}
+                  </p>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+                    <p style={{ fontSize: 10, color: "#555568" }}>📅 {e.date}</p>
+                    {e.billable && <span style={{ fontSize: 10, color: "#4caf7d" }}>≈ ${(e.hours * 150).toLocaleString()} MXN</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <div className="card" style={{ marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <div>
+                    <div className="sec-title">Productividad por Abogado</div>
+                    <div style={{ fontSize: 11, color: "#70708a" }}>Meta mensual: 250 horas por persona</div>
+                  </div>
+                </div>
+                {LAWYERS.map(l => {
+                  const percentage = Math.round((l.hours / 250) * 100);
+                  const isOnTrack = percentage >= 60; // At least 60% of monthly goal
+                  return (
+                    <div key={l.id} style={{ marginBottom: 14 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                        <img src={l.avatar} alt="" className="avatar" style={{ width: 26, height: 26 }} />
+                        <span style={{ fontSize: 12, flex: 1 }}>{l.name.split(" ").slice(0, 3).join(" ")}</span>
+                        <span style={{ fontSize: 11, color: isOnTrack ? "#4caf7d" : "#f5a623", marginRight: 4 }}>
+                          {percentage}%
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: "#c9a84c" }}>{l.hours}h</span>
+                      </div>
+                      <div className="progress-bar" style={{ height: 6 }}>
+                        <div className="progress-fill" style={{
+                          width: `${Math.min(percentage, 100)}%`,
+                          background: isOnTrack ? "linear-gradient(90deg, #4caf7d, #6dd49a)" : "linear-gradient(90deg, #f5a623, #f7c56e)"
+                        }} />
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "#555568", marginTop: 3 }}>
+                        <span>{l.hours}h registradas</span>
+                        <span>Faltan {250 - l.hours}h para meta</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #c9a84c18", fontSize: 11 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", color: "#9090a8" }}>
+                    <span>Total del equipo:</span>
+                    <span style={{ color: "#c9a84c", fontWeight: 600 }}>{LAWYERS.reduce((a,b) => a + b.hours, 0)}h de {LAWYERS.length * 250}h</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <div>
+                    <div className="sec-title">Horas Mensuales</div>
+                    <div style={{ fontSize: 11, color: "#70708a" }}>Horas facturables del equipo</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: "#c9a84c", fontFamily: "'Cormorant Garamond',serif" }}>
+                      {HOURS_DATA.reduce((a,b) => a + b.horas, 0)}h
+                    </div>
+                    <div style={{ fontSize: 10, color: "#70708a" }}>Total 6 meses</div>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={HOURS_DATA} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#c9a84c0d" />
+                    <XAxis dataKey="mes" stroke="#70708a" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="#70708a" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}h`} />
+                    <Tooltip content={<CustomTooltip type="hours" />} />
+                    <Bar dataKey="horas" fill="#c9a84c" radius={[4, 4, 0, 0]} name="Horas">
+                      {HOURS_DATA.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.horas >= entry.meta ? "#c9a84c" : "#c9a84c88"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div style={{ display: "flex", gap: 12, marginTop: 8, fontSize: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 10, height: 10, background: "#c9a84c", borderRadius: 2 }} />
+                    <span style={{ color: "#9090a8" }}>Meta alcanzada (≥350h)</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 10, height: 10, background: "#c9a84c88", borderRadius: 2 }} />
+                    <span style={{ color: "#9090a8" }}>Por debajo de meta</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    /* LAWYERS VIEW */
+    function LawyersView() {
+      const [selectedLawyer, setSelectedLawyer] = useState(null);
+      const [viewMode, setViewMode] = useState("cards"); // cards or list
+
+      const getLawyerCases = (lawyerName) => CASES.filter(c => c.lawyer === lawyerName);
+
+      // Calculate team stats
+      const totalCases = LAWYERS.reduce((acc, l) => acc + getLawyerCases(l.name).length, 0);
+      const totalHours = LAWYERS.reduce((acc, l) => acc + l.hours, 0);
+      const avgCasesPerLawyer = (totalCases / LAWYERS.length).toFixed(1);
+
+      return (
+        <>
+          <div className="sec-header">
+            <div><div className="sec-title">Abogados del Despacho</div><div className="sec-subtitle">{LAWYERS.length} profesionistas activos • {totalCases} casos asignados</div></div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", background: "#0f1320", borderRadius: 6, padding: 2, border: "1px solid #c9a84c18" }} title="Cambiar vista">
+                <button
+                  className={viewMode === "cards" ? "tab active" : "tab"}
+                  onClick={() => setViewMode("cards")}
+                  style={{ padding: "5px 10px" }}
+                  title="Vista de tarjetas"
+                >
+                  <Icon name="dashboard" size={14} />
+                </button>
+                <button
+                  className={viewMode === "list" ? "tab active" : "tab"}
+                  onClick={() => setViewMode("list")}
+                  style={{ padding: "5px 10px" }}
+                  title="Vista de lista"
+                >
+                  <Icon name="menu" size={14} />
+                </button>
+              </div>
+              <button className="btn btn-gold"><Icon name="plus" size={14} />Agregar Abogado</button>
+            </div>
+          </div>
+
+          {/* Info Banner */}
+          <div className="card" style={{ background: "linear-gradient(135deg, #4caf7d11 0%, #4caf7d05 100%)", border: "1px solid #4caf7d33", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#4caf7d22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Icon name="users" size={18} color="#4caf7d" />
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#4caf7d", marginBottom: 4 }}>Equipo Legal del Despacho</div>
+                <div style={{ fontSize: 12, color: "#9090a8", lineHeight: 1.5 }}>
+                  Directorio completo de abogados. Cada tarjeta muestra: <strong>Casos</strong> = número de expedientes asignados, <strong>Horas</strong> = tiempo facturable del mes, <strong>Urgentes</strong> = casos que requieren atención prioritaria. Haz clic en "Ver casos" para detalles de cada abogado.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Team Summary Stats */}
+          <div className="grid-4" style={{ marginBottom: 16 }}>
+            <div className="card" style={{ padding: 14, textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#c9a84c", fontFamily: "'Cormorant Garamond',serif" }}>{LAWYERS.length}</div>
+              <div style={{ fontSize: 11, color: "#9090a8" }}>Abogados</div>
+              <div style={{ fontSize: 10, color: "#555568" }}>en el equipo</div>
+            </div>
+            <div className="card" style={{ padding: 14, textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#5b8dee", fontFamily: "'Cormorant Garamond',serif" }}>{totalCases}</div>
+              <div style={{ fontSize: 11, color: "#9090a8" }}>Casos Totales</div>
+              <div style={{ fontSize: 10, color: "#555568" }}>asignados al equipo</div>
+            </div>
+            <div className="card" style={{ padding: 14, textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#4caf7d", fontFamily: "'Cormorant Garamond',serif" }}>{avgCasesPerLawyer}</div>
+              <div style={{ fontSize: 11, color: "#9090a8" }}>Promedio</div>
+              <div style={{ fontSize: 10, color: "#555568" }}>casos por abogado</div>
+            </div>
+            <div className="card" style={{ padding: 14, textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#f5a623", fontFamily: "'Cormorant Garamond',serif" }}>{totalHours}h</div>
+              <div style={{ fontSize: 11, color: "#9090a8" }}>Horas Totales</div>
+              <div style={{ fontSize: 10, color: "#555568" }}>facturables del equipo</div>
+            </div>
+          </div>
+
+          {viewMode === "cards" ? (
+            <div className="grid-3">
+              {LAWYERS.map(l => {
+                const lawyerCases = getLawyerCases(l.name);
+                const urgentCases = lawyerCases.filter(c => c.status === "Urgente").length;
+                return (
+                  <div key={l.id} className="card" style={{ textAlign: "center", position: "relative" }}>
+                    <div style={{ position: "absolute", top: 14, right: 14 }}>
+                      <span className={`badge ${l.status === "Activo" ? "badge-active" : "badge-pending"}`}>{l.status}</span>
+                    </div>
+                    <img src={l.avatar} alt={l.name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "3px solid #c9a84c44", marginBottom: 12 }} />
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontWeight: 700, color: "#f5f0e8" }}>{l.name}</div>
+                    <div style={{ fontSize: 12, color: "#c9a84c", marginBottom: 14 }}>{l.specialty}</div>
+
+                    <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 16 }}>
+                      <div title="Expedientes asignados actualmente">
+                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 700, color: "#c9a84c" }}>{lawyerCases.length}</div>
+                        <div style={{ fontSize: 11, color: "#70708a" }}>Casos</div>
+                        <div style={{ fontSize: 9, color: "#555568" }}>asignados</div>
+                      </div>
+                      <div style={{ width: 1, background: "#c9a84c18" }} />
+                      <div title="Horas facturables registradas este mes">
+                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 700, color: "#c9a84c" }}>{l.hours}h</div>
+                        <div style={{ fontSize: 11, color: "#70708a" }}>Horas</div>
+                        <div style={{ fontSize: 9, color: "#555568" }}>facturables</div>
+                      </div>
+                      {urgentCases > 0 && (
+                        <>
+                          <div style={{ width: 1, background: "#c9a84c18" }} />
+                          <div title="Casos que requieren atención prioritaria">
+                            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 700, color: "#e05555" }}>{urgentCases}</div>
+                            <div style={{ fontSize: 11, color: "#70708a" }}>Urgentes</div>
+                            <div style={{ fontSize: 9, color: "#555568" }}>prioritarios</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div style={{ textAlign: "left", background: "#0f1320", borderRadius: 8, padding: "10px 12px", border: "1px solid #c9a84c18" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        <Icon name="mail" size={13} color="#c9a84c" />
+                        <span style={{ fontSize: 11, color: "#9090a8" }}>{l.email}</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Icon name="phone" size={13} color="#c9a84c" />
+                        <span style={{ fontSize: 11, color: "#9090a8" }}>{l.phone}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                      <button className="btn btn-outline" style={{ flex: 1, justifyContent: "center", padding: "7px 10px", fontSize: 12 }} onClick={() => setSelectedLawyer(l)}>
+                        <Icon name="eye" size={13} />Ver casos
+                      </button>
+                      <button className="btn btn-ghost" style={{ padding: "7px 10px" }}><Icon name="edit" size={13} /></button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="card">
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th title="Nombre completo del abogado">Abogado</th>
+                      <th title="Área de derecho en la que se especializa">Especialidad</th>
+                      <th title="Número de expedientes asignados actualmente">Casos Activos</th>
+                      <th title="Casos marcados como urgentes que requieren atención prioritaria">Urgentes</th>
+                      <th title="Horas facturables registradas este mes">Horas</th>
+                      <th title="Estado actual: Activo o en Licencia">Status</th>
+                      <th title="Correo electrónico de contacto">Contacto</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LAWYERS.map(l => {
+                      const lawyerCases = getLawyerCases(l.name);
+                      const urgentCases = lawyerCases.filter(c => c.status === "Urgente").length;
+                      return (
+                        <tr key={l.id}>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <img src={l.avatar} alt="" className="avatar" />
+                              <span style={{ fontWeight: 500 }}>{l.name}</span>
+                            </div>
+                          </td>
+                          <td style={{ color: "#c9a84c", fontSize: 12 }}>{l.specialty}</td>
+                          <td><span style={{ fontWeight: 600 }}>{lawyerCases.length}</span></td>
+                          <td>
+                            {urgentCases > 0 ? (
+                              <span className="badge badge-urgent">{urgentCases}</span>
+                            ) : (
+                              <span style={{ color: "#70708a" }}>—</span>
+                            )}
+                          </td>
+                          <td><span style={{ color: "#c9a84c", fontWeight: 500 }}>{l.hours}h</span></td>
+                          <td><span className={`badge ${l.status === "Activo" ? "badge-active" : "badge-pending"}`}>{l.status}</span></td>
+                          <td style={{ fontSize: 11, color: "#9090a8" }}>{l.email}</td>
+                          <td>
+                            <button className="btn btn-outline" style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => setSelectedLawyer(l)}>
+                              Ver casos
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Lawyer Cases Modal */}
+          {selectedLawyer && (
+            <div className="modal-overlay" onClick={() => setSelectedLawyer(null)}>
+              <div className="modal" style={{ maxWidth: 700 }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <img src={selectedLawyer.avatar} alt="" style={{ width: 56, height: 56, borderRadius: "50%", border: "3px solid #c9a84c44" }} />
+                    <div>
+                      <div className="modal-title" style={{ marginBottom: 2 }}>{selectedLawyer.name}</div>
+                      <p style={{ fontSize: 12, color: "#c9a84c" }}>{selectedLawyer.specialty}</p>
+                    </div>
+                  </div>
+                  <button className="icon-btn" onClick={() => setSelectedLawyer(null)}><Icon name="x" size={16} /></button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
+                  <div style={{ background: "#0f1320", padding: "12px", borderRadius: 8, textAlign: "center", border: "1px solid #c9a84c18" }}>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: "#c9a84c", fontFamily: "'Cormorant Garamond',serif" }}>{getLawyerCases(selectedLawyer.name).length}</div>
+                    <div style={{ fontSize: 11, color: "#70708a" }}>Casos Totales</div>
+                  </div>
+                  <div style={{ background: "#0f1320", padding: "12px", borderRadius: 8, textAlign: "center", border: "1px solid #c9a84c18" }}>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: "#e05555", fontFamily: "'Cormorant Garamond',serif" }}>{getLawyerCases(selectedLawyer.name).filter(c => c.status === "Urgente").length}</div>
+                    <div style={{ fontSize: 11, color: "#70708a" }}>Urgentes</div>
+                  </div>
+                  <div style={{ background: "#0f1320", padding: "12px", borderRadius: 8, textAlign: "center", border: "1px solid #c9a84c18" }}>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: "#4caf7d", fontFamily: "'Cormorant Garamond',serif" }}>{selectedLawyer.hours}h</div>
+                    <div style={{ fontSize: 11, color: "#70708a" }}>Horas Mes</div>
+                  </div>
+                </div>
+
+                <div className="gold-line" style={{ margin: "16px 0" }} />
+
+                <div style={{ marginBottom: 12 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: "#c9a84c" }}>Casos Asignados</span>
+                </div>
+
+                <div style={{ maxHeight: 300, overflowY: "auto" }}>
+                  {getLawyerCases(selectedLawyer.name).length === 0 ? (
+                    <p style={{ color: "#70708a", textAlign: "center", padding: 20 }}>No hay casos asignados</p>
+                  ) : (
+                    getLawyerCases(selectedLawyer.name).map(c => (
+                      <div key={c.id} style={{
+                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                        padding: "12px", marginBottom: 8, background: "#0f1320",
+                        borderRadius: 8, border: "1px solid #c9a84c18"
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                            <span style={{ fontSize: 10, color: "#c9a84c", fontFamily: "monospace" }}>{c.id}</span>
+                            {statusBadge(c.status)}
+                          </div>
+                          <p style={{ fontSize: 13, fontWeight: 500, color: "#e8e2d6" }}>{c.name}</p>
+                          <p style={{ fontSize: 11, color: "#70708a", marginTop: 2 }}>
+                            <Icon name="scale" size={10} style={{ marginRight: 4 }} />{c.tribunal} · <Icon name="gavel" size={10} style={{ marginRight: 4 }} />{c.judge}
+                          </p>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 12, color: "#9090a8" }}>{c.hours}h / {c.maxHours}h</div>
+                          <div className="progress-bar" style={{ width: 60, marginTop: 4 }}>
+                            <div className="progress-fill" style={{ width: `${(c.hours / c.maxHours) * 100}%` }} />
+                          </div>
+                          <div style={{ fontSize: 10, color: "#70708a", marginTop: 4 }}>Próx: {c.nextHearing}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                  <button className="btn btn-outline" style={{ flex: 1 }}><Icon name="mail" size={14} />Contactar</button>
+                  <button className="btn btn-ghost"><Icon name="edit" size={14} />Editar</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    /* TRIBUNALS */
+    function Tribunals() {
+      const tribunals = [...new Set(CASES.map(c => c.tribunal))].map(t => ({
+        name: t,
+        cases: CASES.filter(c => c.tribunal === t),
+        judge: CASES.find(c => c.tribunal === t)?.judge,
+      }));
+
+      const totalCases = tribunals.reduce((a, b) => a + b.cases.length, 0);
+      const urgentInTribunals = CASES.filter(c => c.status === "Urgente").length;
+
+      return (
+        <>
+          <div className="sec-header">
+            <div>
+              <div className="sec-title">Tribunales y Jueces</div>
+              <div className="sec-subtitle">Jurisdicciones donde el despacho tiene casos activos</div>
+            </div>
+          </div>
+
+          {/* Stats summary */}
+          <div className="grid-4" style={{ marginBottom: 20 }}>
+            <div className="card" style={{ padding: 16, textAlign: "center" }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#c9a84c", fontFamily: "'Cormorant Garamond',serif" }}>{tribunals.length}</div>
+              <div style={{ fontSize: 11, color: "#9090a8" }}>Tribunales Activos</div>
+              <div style={{ fontSize: 10, color: "#555568" }}>con casos del despacho</div>
+            </div>
+            <div className="card" style={{ padding: 16, textAlign: "center" }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#5b8dee", fontFamily: "'Cormorant Garamond',serif" }}>{totalCases}</div>
+              <div style={{ fontSize: 11, color: "#9090a8" }}>Casos Totales</div>
+              <div style={{ fontSize: 10, color: "#555568" }}>en todas las jurisdicciones</div>
+            </div>
+            <div className="card" style={{ padding: 16, textAlign: "center" }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#e05555", fontFamily: "'Cormorant Garamond',serif" }}>{urgentInTribunals}</div>
+              <div style={{ fontSize: 11, color: "#9090a8" }}>Casos Urgentes</div>
+              <div style={{ fontSize: 10, color: "#555568" }}>requieren atención inmediata</div>
+            </div>
+            <div className="card" style={{ padding: 16, textAlign: "center" }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#4caf7d", fontFamily: "'Cormorant Garamond',serif" }}>{[...new Set(CASES.map(c => c.judge))].length}</div>
+              <div style={{ fontSize: 11, color: "#9090a8" }}>Jueces/Árbitros</div>
+              <div style={{ fontSize: 10, color: "#555568" }}>asignados a nuestros casos</div>
+            </div>
+          </div>
+
+          {/* Info banner */}
+          <div style={{ background: "linear-gradient(90deg, #5b8dee18, #5b8dee08)", border: "1px solid #5b8dee22", borderRadius: 10, padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <Icon name="scale" size={18} color="#5b8dee" />
+            <span style={{ fontSize: 12, color: "#e8e2d6" }}>
+              <b style={{ color: "#5b8dee" }}>Nota:</b> Cada tribunal tiene sus propios tiempos y procedimientos. Los casos urgentes tienen audiencias próximas programadas.
+            </span>
+          </div>
+
+          <div className="grid-2">
+            {tribunals.map((t, i) => {
+              const urgentCases = t.cases.filter(c => c.status === "Urgente").length;
+              const activeCases = t.cases.filter(c => c.status === "Activo").length;
+              return (
+                <div key={i} className="card">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                    <div style={{ width: 40, height: 40, background: "#c9a84c18", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", color: "#c9a84c" }}>
+                      <Icon name="scale" size={20} />
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {urgentCases > 0 && (
+                        <span style={{ fontSize: 10, color: "#e05555", background: "#e0555518", padding: "3px 8px", borderRadius: 20, border: "1px solid #e0555533" }}>
+                          {urgentCases} urgente{urgentCases > 1 ? "s" : ""}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 11, color: "#c9a84c", background: "#c9a84c18", padding: "3px 8px", borderRadius: 20 }}>
+                        {t.cases.length} caso{t.cases.length > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 17, fontWeight: 600, color: "#f5f0e8", marginBottom: 4 }}>{t.name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                    <Icon name="gavel" size={13} color="#c9a84c88" />
+                    <span style={{ fontSize: 12, color: "#9090a8" }}>Juez/Árbitro: <b style={{ color: "#e8e2d6" }}>{t.judge}</b></span>
+                  </div>
+
+                  {/* Case type breakdown */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12, fontSize: 10 }}>
+                    <span style={{ color: "#4caf7d" }}>● {activeCases} activos</span>
+                    <span style={{ color: "#f5a623" }}>● {t.cases.filter(c => c.status === "Pendiente").length} pendientes</span>
+                    <span style={{ color: "#70708a" }}>● {t.cases.filter(c => c.status === "Cerrado").length} cerrados</span>
+                  </div>
+
+                  <div className="gold-line" style={{ margin: "10px 0" }} />
+
+                  <div style={{ fontSize: 10, color: "#c9a84c", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Casos en este tribunal:</div>
+
+                  {t.cases.map((c, j) => (
+                    <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, padding: "8px", background: "#0f1320", borderRadius: 6, border: "1px solid #c9a84c0d" }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                          <span style={{ fontSize: 9, color: "#c9a84c88", fontFamily: "monospace" }}>{c.id}</span>
+                          {statusBadge(c.status)}
+                        </div>
+                        <p style={{ fontSize: 12, color: "#e8e2d6", fontWeight: 500 }}>{c.name.length > 30 ? c.name.slice(0, 30) + "…" : c.name}</p>
+                        <p style={{ fontSize: 10, color: "#70708a", marginTop: 2 }}>
+                          👤 {c.lawyer.split(" ").slice(0, 2).join(" ")} · 📅 Próx: {c.nextHearing}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      );
+    }
+
+    /* DOCUMENTS */
+    function Documents() {
+      const docs = [
+        { name: "Escrito Inicial - González vs Delta.pdf", case: "LEX-2025-001", size: "2.4 MB", sizeNum: 2.4, date: "12 Ene 2025", type: "PDF", color: "#e05555", category: "Escritos Legales", description: "Demanda inicial presentada ante el tribunal" },
+        { name: "Contrato de Servicios TechMX.docx", case: "LEX-2025-007", size: "890 KB", sizeNum: 0.89, date: "02 Feb 2025", type: "DOC", color: "#5b8dee", category: "Contratos", description: "Acuerdo de servicios profesionales" },
+        { name: "Pruebas Fotográficas - Ramírez.zip", case: "LEX-2025-003", size: "45 MB", sizeNum: 45, date: "05 Feb 2025", type: "ZIP", color: "#f5a623", category: "Evidencia", description: "Archivo comprimido con fotografías de evidencia" },
+        { name: "Acuerdo Fiscal Horizonte Q4.xlsx", case: "LEX-2025-002", size: "1.2 MB", sizeNum: 1.2, date: "21 Ene 2025", type: "XLS", color: "#4caf7d", category: "Reportes", description: "Análisis financiero del cuarto trimestre" },
+        { name: "Sentencia Previa - Herrera.pdf", case: "LEX-2025-004", size: "3.1 MB", sizeNum: 3.1, date: "15 Feb 2025", type: "PDF", color: "#e05555", category: "Sentencias", description: "Resolución judicial de caso relacionado" },
+        { name: "Notificación Juzgado Penal.pdf", case: "LEX-2025-003", size: "450 KB", sizeNum: 0.45, date: "18 Feb 2025", type: "PDF", color: "#e05555", category: "Notificaciones", description: "Comunicación oficial del juzgado" },
+      ];
+
+      const [filterType, setFilterType] = useState("Todos");
+      const [search, setSearch] = useState("");
+
+      // Calculate stats
+      const totalSize = docs.reduce((acc, d) => acc + d.sizeNum, 0).toFixed(1);
+      const typeCount = docs.reduce((acc, d) => { acc[d.type] = (acc[d.type] || 0) + 1; return acc; }, {});
+      const categoryCount = docs.reduce((acc, d) => { acc[d.category] = (acc[d.category] || 0) + 1; return acc; }, {});
+      const types = ["Todos", ...Object.keys(typeCount)];
+
+      const filtered = docs.filter(d => {
+        const matchType = filterType === "Todos" || d.type === filterType;
+        const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) || d.case.toLowerCase().includes(search.toLowerCase()) || d.category.toLowerCase().includes(search.toLowerCase());
+        return matchType && matchSearch;
+      });
+
+      const typeInfo = {
+        "PDF": { label: "Documento PDF", icon: "Archivos de texto, escritos, sentencias" },
+        "DOC": { label: "Documento Word", icon: "Contratos, acuerdos, borradores" },
+        "XLS": { label: "Hoja de cálculo", icon: "Reportes, análisis financieros" },
+        "ZIP": { label: "Archivo comprimido", icon: "Evidencia, múltiples archivos" },
+      };
+
+      return (
+        <>
+          <div className="sec-header">
+            <div><div className="sec-title">Gestión Documental</div><div className="sec-subtitle">{docs.length} documentos en el sistema • {totalSize} MB de almacenamiento usado</div></div>
+            <button className="btn btn-gold"><Icon name="plus" size={14} />Subir Documento</button>
+          </div>
+
+          {/* Info Banner */}
+          <div className="card" style={{ background: "linear-gradient(135deg, #c9a84c11 0%, #c9a84c05 100%)", border: "1px solid #c9a84c33", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#c9a84c22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Icon name="file" size={18} color="#c9a84c" />
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#c9a84c", marginBottom: 4 }}>Centro de Documentos del Despacho</div>
+                <div style={{ fontSize: 12, color: "#9090a8", lineHeight: 1.5 }}>
+                  Aquí se almacenan todos los documentos relacionados con los casos. Cada documento está vinculado a un expediente específico (número LEX-XXXX-XXX) para fácil referencia. Los tipos de archivo incluyen PDFs para documentos legales, Word para borradores, Excel para análisis y ZIP para evidencia múltiple.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Summary */}
+          <div className="grid-4" style={{ marginBottom: 16 }}>
+            {Object.entries(typeCount).map(([type, count]) => (
+              <div className="card" key={type} style={{ padding: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 6, background: (type === "PDF" ? "#e05555" : type === "DOC" ? "#5b8dee" : type === "XLS" ? "#4caf7d" : "#f5a623") + "22", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: type === "PDF" ? "#e05555" : type === "DOC" ? "#5b8dee" : type === "XLS" ? "#4caf7d" : "#f5a623" }}>{type}</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: "#e8e2d6" }}>{count}</div>
+                    <div style={{ fontSize: 10, color: "#70708a" }}>{count === 1 ? "archivo" : "archivos"}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: "#9090a8" }}>{typeInfo[type]?.label || type}</div>
+                <div style={{ fontSize: 10, color: "#555568", marginTop: 2 }}>{typeInfo[type]?.icon || ""}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Categories Overview */}
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#e8e2d6", marginBottom: 12 }}>Categorías de Documentos</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {Object.entries(categoryCount).map(([cat, count]) => (
+                <div key={cat} style={{ padding: "6px 12px", borderRadius: 20, background: "#1a1d28", border: "1px solid #2a2d38", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 12, color: "#e8e2d6" }}>{cat}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "#c9a84c", background: "#c9a84c22", padding: "2px 6px", borderRadius: 10 }}>{count}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: "#555568", marginTop: 10 }}>Las categorías ayudan a organizar documentos por su función legal: Escritos Legales, Contratos, Evidencia, etc.</div>
+          </div>
+
+          <div className="card">
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+              <div className="search-bar" style={{ maxWidth: "none", flex: 1, minWidth: 200 }}>
+                <Icon name="search" size={15} color="#555568" />
+                <input placeholder="Buscar por nombre, expediente o categoría…" value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {types.map(t => (
+                  <button key={t} onClick={() => setFilterType(t)} className={filterType === t ? "btn btn-gold" : "btn btn-ghost"} style={{ padding: "6px 12px", fontSize: 11 }}>
+                    {t === "Todos" ? "Todos" : t}
+                    {t !== "Todos" && <span style={{ marginLeft: 4, opacity: 0.7 }}>({typeCount[t]})</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {filterType !== "Todos" && (
+              <div style={{ background: "#c9a84c11", border: "1px solid #c9a84c33", borderRadius: 8, padding: 10, marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 12, color: "#c9a84c" }}>Mostrando solo archivos <strong>{filterType}</strong> ({typeCount[filterType]} de {docs.length})</span>
+                <button onClick={() => setFilterType("Todos")} style={{ background: "transparent", border: "none", color: "#c9a84c", fontSize: 11, cursor: "pointer" }}>Limpiar filtro</button>
+              </div>
+            )}
+
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Archivo</th>
+                    <th>Expediente</th>
+                    <th>Categoría</th>
+                    <th>Tipo</th>
+                    <th>Tamaño</th>
+                    <th>Fecha de Subida</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((d, i) => (
+                    <tr key={i}>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 8, background: d.color + "18", border: `1px solid ${d.color}33`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: d.color, letterSpacing: 0.5 }}>{d.type}</div>
+                          <div>
+                            <div style={{ fontSize: 13, color: "#e8e2d6" }}>{d.name}</div>
+                            <div style={{ fontSize: 10, color: "#555568", marginTop: 2 }}>{d.description}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <span style={{ fontSize: 11, fontFamily: "monospace", color: "#c9a84c", background: "#c9a84c11", padding: "2px 6px", borderRadius: 4 }}>{d.case}</span>
+                          <div style={{ fontSize: 9, color: "#555568", marginTop: 2 }}>Ver caso asociado</div>
+                        </div>
+                      </td>
+                      <td><span style={{ fontSize: 11, color: "#9090a8", background: "#1a1d28", padding: "3px 8px", borderRadius: 4 }}>{d.category}</span></td>
+                      <td><span style={{ fontSize: 11, color: d.color, fontWeight: 600 }}>{d.type}</span></td>
+                      <td style={{ fontSize: 12, color: "#70708a" }}>{d.size}</td>
+                      <td style={{ fontSize: 12, color: "#70708a" }}>{d.date}</td>
+                      <td>
+                        <div style={{ display: "flex", gap: 4 }}>
+                          <button className="icon-btn" style={{ width: 28, height: 28 }} title="Ver documento"><Icon name="eye" size={13} /></button>
+                          <button className="icon-btn" style={{ width: 28, height: 28 }} title="Descargar"><Icon name="download" size={13} /></button>
+                          <button className="icon-btn" style={{ width: 28, height: 28 }} title="Eliminar"><Icon name="trash" size={13} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filtered.length === 0 && (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <Icon name="file" size={32} color="#555568" />
+                <div style={{ fontSize: 14, color: "#70708a", marginTop: 12 }}>No se encontraron documentos</div>
+                <div style={{ fontSize: 12, color: "#555568", marginTop: 4 }}>Intenta cambiar los filtros o el término de búsqueda</div>
+              </div>
+            )}
+
+            {/* Table Legend */}
+            <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid #1a1d28" }}>
+              <div style={{ fontSize: 11, color: "#555568", display: "flex", flexWrap: "wrap", gap: 16 }}>
+                <span><Icon name="eye" size={12} /> Ver = Previsualizar documento</span>
+                <span><Icon name="download" size={12} /> Descargar = Guardar copia local</span>
+                <span><Icon name="trash" size={12} /> Eliminar = Mover a papelera</span>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    /* NEW CASE MODAL */
+    function NewCaseModal({ onClose }) {
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div className="modal-title">Nuevo Caso</div>
+              <button className="icon-btn" onClick={onClose}><Icon name="x" size={16} /></button>
+            </div>
+            <div className="form-grid">
+              <div className="form-group"><label className="form-label">Nombre del Caso</label><input className="form-input" placeholder="Ej. García vs. Inmobiliaria XYZ" /></div>
+              <div className="form-group"><label className="form-label">Cliente</label><input className="form-input" placeholder="Nombre del cliente" /></div>
+            </div>
+            <div className="form-grid">
+              <div className="form-group"><label className="form-label">Abogado Asignado</label>
+                <select className="form-input">
+                  {LAWYERS.map(l => <option key={l.id}>{l.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">Área Legal</label>
+                <select className="form-input">
+                  {["Civil", "Penal", "Mercantil", "Laboral", "Familiar", "Fiscal"].map(a => <option key={a}>{a}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="form-grid">
+              <div className="form-group"><label className="form-label">Tribunal</label><input className="form-input" placeholder="Nombre del tribunal" /></div>
+              <div className="form-group"><label className="form-label">Juez / Árbitro</label><input className="form-input" placeholder="Nombre del juez" /></div>
+            </div>
+            <div className="form-grid">
+              <div className="form-group"><label className="form-label">Prioridad</label>
+                <select className="form-input">
+                  {["Alta", "Media", "Baja", "Urgente"].map(p => <option key={p}>{p}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">Horas Estimadas</label><input className="form-input" type="number" placeholder="100" /></div>
+            </div>
+            <div className="form-group"><label className="form-label">Descripción / Notas</label><textarea className="form-input" rows={3} placeholder="Descripción del caso…" /></div>
+            <div className="form-group"><label className="form-label">Próxima Audiencia</label><input className="form-input" type="date" /></div>
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              <button className="btn btn-gold" style={{ flex: 1, justifyContent: "center" }}><Icon name="plus" size={14} />Crear Caso</button>
+              <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* APP */
+    function App() {
+      const [page, setPage] = useState("dashboard");
+      const [collapsed, setCollapsed] = useState(false);
+      const [mobileOpen, setMobileOpen] = useState(false);
+      const [showNewCase, setShowNewCase] = useState(false);
+      const [showMobileSearch, setShowMobileSearch] = useState(false);
+      const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+      useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+
+      // Close sidebar on escape key
+      useEffect(() => {
+        const handleEsc = (e) => { if (e.key === 'Escape') setMobileOpen(false); };
+        document.addEventListener('keydown', handleEsc);
+        return () => document.removeEventListener('keydown', handleEsc);
+      }, []);
+
+      const NAV = [
+        { id: "dashboard", icon: "dashboard", label: "Dashboard" },
+        { id: "casos", icon: "briefcase", label: "Casos", badge: 7 },
+        { id: "horas", icon: "clock", label: "Centro de Horas" },
+        { id: "abogados", icon: "users", label: "Abogados" },
+        { id: "tribunales", icon: "scale", label: "Tribunales" },
+        { id: "documentos", icon: "file", label: "Documentos" },
+      ];
+      const NAV2 = [
+        { id: "calendario", icon: "calendar", label: "Calendario" },
+        { id: "config", icon: "settings", label: "Configuración" },
+      ];
+
+      const navClick = (id) => {
+        setPage(id);
+        if (isMobile) setMobileOpen(false);
+      };
+
+      const toggleMenu = () => {
+        if (isMobile) {
+          setMobileOpen(o => !o);
+        } else {
+          setCollapsed(c => !c);
+        }
+      };
+
+      const sideClass = `sidebar${collapsed && !isMobile ? " collapsed" : ""}${mobileOpen ? " mobile-open" : ""}`;
+
+      const titles = { dashboard: "Panel General", casos: "Gestión de Casos", horas: "Centro de Horas", abogados: "Equipo Legal", tribunales: "Tribunales & Jueces", documentos: "Documentos", calendario: "Calendario", config: "Configuración" };
+      const shortTitles = { dashboard: "Panel", casos: "Casos", horas: "Horas", abogados: "Equipo", tribunales: "Tribunales", documentos: "Docs", calendario: "Calendario", config: "Config" };
+
+      return (
+        <>
+          <div className="app">
+            {/* MOBILE OVERLAY */}
+            <div
+              className={`mobile-overlay ${mobileOpen ? 'active' : ''}`}
+              onClick={() => setMobileOpen(false)}
+            />
+
+            {/* SIDEBAR */}
+            <div className={sideClass}>
+              <div className="sidebar-logo">
+                <div className="logo-icon"><Icon name="scale" size={20} /></div>
+                <div className="logo-text"><h1>LexFirm</h1><p>Legal Management</p></div>
+                {isMobile && (
+                  <button
+                    className="icon-btn"
+                    style={{ marginLeft: 'auto', background: 'transparent', border: 'none' }}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Icon name="x" size={18} />
+                  </button>
+                )}
+              </div>
+
+              <div className="nav-section" style={{ flex: 1, overflowY: 'auto' }}>
+                <div className="nav-label">{(!collapsed || isMobile) && "Principal"}</div>
+                {NAV.map(n => (
+                  <div key={n.id} className={`nav-item ${page === n.id ? "active" : ""}`} onClick={() => navClick(n.id)} title={n.label}>
+                    <Icon name={n.icon} />
+                    <span>{n.label}</span>
+                    {n.badge && (!collapsed || isMobile) && <span className="nav-badge">{n.badge}</span>}
+                  </div>
+                ))}
+                <div style={{ margin: "10px 0 4px" }} className="nav-label">{(!collapsed || isMobile) && "Sistema"}</div>
+                {NAV2.map(n => (
+                  <div key={n.id} className={`nav-item ${page === n.id ? "active" : ""}`} onClick={() => navClick(n.id)} title={n.label}>
+                    <Icon name={n.icon} /><span>{n.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="sidebar-footer">
+                <div className="user-card">
+                  <img src="https://randomuser.me/api/portraits/men/40.jpg" alt="" className="user-avatar" />
+                  <div className="user-info" style={{ overflow: (collapsed && !isMobile) ? "hidden" : "visible" }}>
+                    <p>Dr. A. Vargas</p><span>Socio Director</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* MAIN AREA */}
+            <div className="main">
+              <div className="topbar">
+                <button className="icon-btn" onClick={toggleMenu} aria-label="Menu">
+                  <Icon name="menu" size={16} />
+                </button>
+                <span className="topbar-title">{isMobile ? shortTitles[page] : titles[page]}</span>
+
+                {/* Desktop search */}
+                <div className="search-bar">
+                  <Icon name="search" size={15} color="#555568" />
+                  <input placeholder="Buscar expedientes, clientes…" />
+                </div>
+
+                <div className="topbar-actions">
+                  {/* Mobile search button */}
+                  <button
+                    className="icon-btn mobile-search-btn"
+                    onClick={() => setShowMobileSearch(s => !s)}
+                    style={{ display: isMobile ? 'flex' : 'none' }}
+                  >
+                    <Icon name="search" size={16} />
+                  </button>
+                  <div className="icon-btn"><Icon name="bell" size={16} /><div className="notif-dot" /></div>
+                  {!isMobile && <div className="icon-btn"><Icon name="refresh" size={16} /></div>}
+                  <img src="https://randomuser.me/api/portraits/men/40.jpg" alt="" style={{ width: 34, height: 34, borderRadius: "50%", border: "2px solid #c9a84c44", cursor: "pointer" }} />
+                </div>
+              </div>
+
+              {/* Mobile search bar */}
+              {showMobileSearch && isMobile && (
+                <div style={{ padding: '0 12px 12px', background: '#07090f' }}>
+                  <div className="search-bar" style={{ display: 'flex', maxWidth: 'none' }}>
+                    <Icon name="search" size={15} color="#555568" />
+                    <input placeholder="Buscar…" autoFocus />
+                    <button
+                      style={{ background: 'none', border: 'none', color: '#9090a8', cursor: 'pointer', padding: 4 }}
+                      onClick={() => setShowMobileSearch(false)}
+                    >
+                      <Icon name="x" size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="content">
+                {page === "dashboard" && <Dashboard />}
+                {page === "casos" && <Cases onAdd={() => setShowNewCase(true)} />}
+                {page === "horas" && <Hours />}
+                {page === "abogados" && <LawyersView />}
+                {page === "tribunales" && <Tribunals />}
+                {page === "documentos" && <Documents />}
+                {(page === "calendario" || page === "config") && (
+                  <div className="card" style={{ textAlign: "center", padding: isMobile ? "40px 20px" : "60px 40px" }}>
+                    <div style={{ width: isMobile ? 52 : 64, height: isMobile ? 52 : 64, borderRadius: "50%", background: "#c9a84c18", border: "1px solid #c9a84c33", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "#c9a84c" }}>
+                      <Icon name={page === "calendario" ? "calendar" : "settings"} size={isMobile ? 24 : 28} />
+                    </div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 24, color: "#f5f0e8", marginBottom: 8 }}>
+                      {page === "calendario" ? "Calendario de Audiencias" : "Configuración del Sistema"}
+                    </div>
+                    <p style={{ fontSize: isMobile ? 12 : 13, color: "#70708a" }}>Esta sección está lista para integrarse con los datos de tu despacho.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* FAB */}
+          <button className="fab" onClick={() => setShowNewCase(true)} title="Nuevo Caso"><Icon name="plus" size={22} /></button>
+
+          {/* MODALS */}
+          {showNewCase && <NewCaseModal onClose={() => setShowNewCase(false)} />}
+        </>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
